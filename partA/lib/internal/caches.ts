@@ -5,7 +5,7 @@ type Entry<V> = {
   value: V;
   touchedAt: number;
   frequency: number;
-  expiresAt?: number;
+  expiresAt: number | undefined;
 };
 
 abstract class BaseCache<K, V> implements Cache<K, V> {
@@ -110,6 +110,10 @@ abstract class BaseCache<K, V> implements Cache<K, V> {
 }
 
 class LruCache<K, V> extends BaseCache<K, V> {
+  public constructor(options: CacheOptions) {
+    super(options);
+  }
+
   protected override chooseEvictionKey(): K | undefined {
     let candidateKey: K | undefined;
     let oldestTouch = Number.POSITIVE_INFINITY;
@@ -126,6 +130,10 @@ class LruCache<K, V> extends BaseCache<K, V> {
 }
 
 class LfuCache<K, V> extends BaseCache<K, V> {
+  public constructor(options: CacheOptions) {
+    super(options);
+  }
+
   protected override chooseEvictionKey(): K | undefined {
     let candidateKey: K | undefined;
     let smallestFrequency = Number.POSITIVE_INFINITY;
