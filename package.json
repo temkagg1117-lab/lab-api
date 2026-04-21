@@ -1,0 +1,12 @@
+{
+  "name": "lab12-part-a",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test partA/lib/test/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0"
+  }
+}
