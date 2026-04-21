@@ -34,3 +34,26 @@ test("LRU cache evicts the least recently used entry", () => {
   assert.equal(cache.has("b"), false);
   assert.equal(cache.has("c"), true);
 });
+test("LRU cache updates an existing key without growing size", () => {
+  const cache = createCache<string, number>("lru", { capacity: 2 });
+  cache.set("a", 1);
+  cache.set("a", 10);
+  assert.equal(cache.size(), 1);
+  assert.equal(cache.get("a"), 10);
+});
+
+test("LRU delete removes entries", () => {
+  const cache = createCache<string, number>("lru", { capacity: 2 });
+  cache.set("a", 1);
+  assert.equal(cache.delete("a"), true);
+  assert.equal(cache.delete("a"), false);
+  assert.equal(cache.has("a"), false);
+});
+
+test("LRU clear removes every entry", () => {
+  const cache = createCache<string, number>("lru", { capacity: 2 });
+  cache.set("a", 1);
+  cache.set("b", 2);
+  cache.clear();
+  assert.equal(cache.size(), 0);
+});
