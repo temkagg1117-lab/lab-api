@@ -33,7 +33,7 @@ export interface Cache<K, V> {
    * - The cache size may stay the same or increase by one.
    *
    * Error conditions:
-   * - Throws `CacheError` when the cache is closed or unusable.
+   * - Throws `CacheError` when the cache is closed or unusable
    */
   set(key: K, value: V): void;
 
