@@ -10,3 +10,6 @@ app.listen(3000, () => {
 app.use("/books", require("./routes/books"));
 
 app.use("/loans", require("./routes/loans"));
+
+const errorHandler = require("./middleware/errorHandler");
+app.use(errorHandler);
