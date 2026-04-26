@@ -17,3 +17,7 @@ app.use(errorHandler);
 app.post("/login", (req, res) => {
     res.json({ token: "abc123" });
 });
+
+const auth = require("./middleware/auth");
+
+app.use("/loans", auth, require("./routes/loans"));
