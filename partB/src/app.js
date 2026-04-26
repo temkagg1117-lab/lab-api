@@ -13,3 +13,7 @@ app.use("/loans", require("./routes/loans"));
 
 const errorHandler = require("./middleware/errorHandler");
 app.use(errorHandler);
+
+app.post("/login", (req, res) => {
+    res.json({ token: "abc123" });
+});
