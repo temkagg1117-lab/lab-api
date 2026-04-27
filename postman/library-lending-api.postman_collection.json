@@ -1,0 +1,271 @@
+{
+  "info": {
+    "name": "Library Lending API",
+    "_postman_id": "d3ec1823-b7ca-48f5-b8ad-a2d1f6ca4b27",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "REST API tests for the Library Lending API."
+  },
+  "item": [
+    {
+      "name": "1. Login as admin",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/login",
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}" }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 200', function () { pm.response.to.have.status(200); });",
+          "var json = pm.response.json();",
+          "pm.environment.set('adminToken', json.accessToken);",
+          "pm.test('token saved', function () { pm.expect(json.accessToken).to.be.a('string'); });"
+        ] }
+      }]
+    },
+    {
+      "name": "2. Login as staff",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/login",
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{staffUsername}}\",\n  \"password\": \"{{staffPassword}}\"\n}" }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 200', function () { pm.response.to.have.status(200); });",
+          "var json = pm.response.json();",
+          "pm.environment.set('staffToken', json.accessToken);"
+        ] }
+      }]
+    },
+    {
+      "name": "3. Login fails with wrong password",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/login",
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"wrong-password\"\n}" }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 401', function () { pm.response.to.have.status(401); });",
+          "pm.test('problem details returned', function () { pm.expect(pm.response.json().status).to.eql(401); });"
+        ] }
+      }]
+    },
+    {
+      "name": "4. Create book as admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{baseUrl}}/books",
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"API Design in Practice\",\n  \"author\": \"Lab Team\",\n  \"category\": \"software\",\n  \"totalCopies\": 2\n}" }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 201', function () { pm.response.to.have.status(201); });",
+          "var json = pm.response.json();",
+          "pm.environment.set('createdBookId', json.id);"
+        ] }
+      }]
+    },
+    {
+      "name": "5. Create book forbidden for staff",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+        ],
+        "url": "{{baseUrl}}/books",
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Unauthorized Book\",\n  \"author\": \"No Access\",\n  \"category\": \"test\",\n  \"totalCopies\": 1\n}" }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 403', function () { pm.response.to.have.status(403); });",
+          "pm.test('problem details returned', function () { pm.expect(pm.response.json().status).to.eql(403); });"
+        ] }
+      }]
+    },
+    {
+      "name": "6. Search books",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/books?title=Code&sortBy=title&sortOrder=asc"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 200', function () { pm.response.to.have.status(200); });",
+          "var json = pm.response.json();",
+          "pm.test('data is array', function () { pm.expect(json.data).to.be.an('array'); });"
+        ] }
+      }]
+    },
+    {
+      "name": "7. Paginate books",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/books?page=1&limit=2&sortBy=title&sortOrder=asc"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 200', function () { pm.response.to.have.status(200); });",
+          "var json = pm.response.json();",
+          "pm.test('pagination works', function () { pm.expect(json.data.length).to.be.at.most(2); pm.expect(json.pagination.page).to.eql(1); });"
+        ] }
+      }]
+    },
+    {
+      "name": "8. Missing book returns 404",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/books/book-999"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 404', function () { pm.response.to.have.status(404); });"
+        ] }
+      }]
+    },
+    {
+      "name": "9. Create member",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{baseUrl}}/members",
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Member\",\n  \"email\": \"postman.member@example.com\",\n  \"status\": \"active\"\n}" }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 201', function () { pm.response.to.have.status(201); });",
+          "pm.environment.set('createdMemberId', pm.response.json().id);"
+        ] }
+      }]
+    },
+    {
+      "name": "10. Unauthorized loans request",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/loans"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 401', function () { pm.response.to.have.status(401); });"
+        ] }
+      }]
+    },
+    {
+      "name": "11. Borrow book",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{baseUrl}}/loans",
+        "body": { "mode": "raw", "raw": "{\n  \"memberId\": \"{{createdMemberId}}\",\n  \"bookId\": \"{{createdBookId}}\"\n}" }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 201', function () { pm.response.to.have.status(201); });",
+          "var json = pm.response.json();",
+          "pm.environment.set('createdLoanId', json.id);",
+          "pm.test('due date exists', function () { pm.expect(json.dueDate).to.be.a('string'); });"
+        ] }
+      }]
+    },
+    {
+      "name": "12. Extend loan once",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/loans/{{createdLoanId}}/extend"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 200', function () { pm.response.to.have.status(200); });",
+          "pm.test('extended is true', function () { pm.expect(pm.response.json().extended).to.eql(true); });"
+        ] }
+      }]
+    },
+    {
+      "name": "13. Extend loan twice fails",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/loans/{{createdLoanId}}/extend"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 422', function () { pm.response.to.have.status(422); });"
+        ] }
+      }]
+    },
+    {
+      "name": "14. Return loan",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/loans/{{createdLoanId}}/return"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 200', function () { pm.response.to.have.status(200); });",
+          "pm.test('status becomes returned', function () { pm.expect(pm.response.json().status).to.eql('returned'); });"
+        ] }
+      }]
+    },
+    {
+      "name": "15. Borrow missing book fails",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{baseUrl}}/loans",
+        "body": { "mode": "raw", "raw": "{\n  \"memberId\": \"member-1\",\n  \"bookId\": \"book-999\"\n}" }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('returns 404', function () { pm.response.to.have.status(404); });"
+        ] }
+      }]
+    },
+    {
+      "name": "16. Loan limit setup 1",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{baseUrl}}/loans",
+        "body": { "mode": "raw", "raw": "{\n  \"memberId\": \"member-2\",\n  \"bookId\": \"book-1\"\n}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('returns 201', function () { pm.response.to.have.status(201); });"] } }]
+    }
+  ]
+}
